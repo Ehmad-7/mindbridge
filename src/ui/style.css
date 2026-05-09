@@ -1,0 +1,43 @@
+body {
+
+  font-family: Arial;
+
+  width: 350px;
+
+  padding: 10px;
+
+  background: #111;
+
+  color: white;
+
+}
+
+button {
+
+  width: 100%;
+
+  margin-top: 10px;
+
+  padding: 10px;
+
+  border: none;
+
+  background: #333;
+
+  color: white;
+
+  cursor: pointer;
+
+}
+
+pre {
+
+  margin-top: 10px;
+
+  max-height: 300px;
+
+  overflow-y: auto;
+
+  white-space: pre-wrap;
+
+}

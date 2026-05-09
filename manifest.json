@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+
+  "name": "MindBridge",
+
+  "version": "0.1",
+
+  "description": "Universal AI memory layer",
+
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+
+      "js": [
+        "src/content/content-script.js"
+      ]
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/content/page-script.js"
+      ],
+
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+
+  "action": {
+    "default_popup": "src/ui/popup.html"
+  }
+}

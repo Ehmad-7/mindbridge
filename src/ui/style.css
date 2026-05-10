@@ -1,14 +1,40 @@
 body {
 
-  font-family: Arial;
+  margin: 0;
 
-  width: 350px;
+  padding: 0;
 
-  padding: 10px;
-
-  background: #111;
+  background: #0b1020;
 
   color: white;
+
+  font-family: Arial;
+
+  width: 380px;
+
+}
+
+.container {
+
+  padding: 15px;
+
+}
+
+h1 {
+
+  margin: 0;
+
+  font-size: 28px;
+
+}
+
+.subtitle {
+
+  color: #999;
+
+  margin-top: 5px;
+
+  margin-bottom: 20px;
 
 }
 
@@ -16,28 +42,144 @@ button {
 
   width: 100%;
 
-  margin-top: 10px;
+  padding: 12px;
 
-  padding: 10px;
+  margin-top: 10px;
 
   border: none;
 
-  background: #333;
+  border-radius: 10px;
+
+  background: #1e293b;
 
   color: white;
 
   cursor: pointer;
 
+  font-size: 14px;
+
 }
 
-pre {
+button:hover {
 
-  margin-top: 10px;
+  background: #334155;
 
-  max-height: 300px;
+}
+
+#status {
+
+  margin-top: 15px;
+
+  color: #22c55e;
+
+  font-size: 14px;
+
+}
+
+#output {
+
+  margin-top: 15px;
+
+  max-height: 450px;
 
   overflow-y: auto;
 
-  white-space: pre-wrap;
+}
+
+/* =========================================
+Chat Cards
+========================================= */
+
+.chat-card {
+
+  background: #111827;
+
+  border-radius: 12px;
+
+  padding: 12px;
+
+  margin-bottom: 12px;
+
+  border: 1px solid #1f2937;
+
+  cursor: pointer;
+
+}
+
+.chat-card:hover {
+
+  border-color: #3b82f6;
+
+}
+
+.chat-title {
+
+  font-size: 15px;
+
+  font-weight: bold;
+
+  margin-bottom: 6px;
+
+}
+
+.chat-platform {
+
+  color: #60a5fa;
+
+  font-size: 13px;
+
+  margin-bottom: 6px;
+
+}
+
+.chat-meta {
+
+  color: #9ca3af;
+
+  font-size: 12px;
+
+}
+
+/* =========================================
+Messages
+========================================= */
+
+.message {
+
+  padding: 10px;
+
+  border-radius: 10px;
+
+  margin-bottom: 10px;
+
+}
+
+.user {
+
+  background: #1e293b;
+
+}
+
+.assistant {
+
+  background: #111827;
+
+}
+
+.message-role {
+
+  font-size: 12px;
+
+  color: #60a5fa;
+
+  margin-bottom: 6px;
+
+}
+
+.message-content {
+
+  font-size: 13px;
+
+  line-height: 1.5;
 
 }

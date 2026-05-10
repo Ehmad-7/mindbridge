@@ -7,7 +7,9 @@ Inject page script
 ========================================= */
 
 const script =
-  document.createElement("script")
+  document.createElement(
+    "script"
+  )
 
 script.src =
   chrome.runtime.getURL(
@@ -20,12 +22,97 @@ script.onload = () => {
 
 }
 
-document.documentElement.appendChild(
-  script
+document.documentElement
+  .appendChild(script)
+
+/* =========================================
+Save Chat
+========================================= */
+
+const saveUniversalChat =
+async (chat) => {
+
+  const result =
+
+    await chrome.storage.local.get(
+      "mindbridge_chats"
+    )
+
+  const existing =
+
+    result.mindbridge_chats
+    || []
+
+  const alreadyExists =
+
+    existing.some(existingChat =>
+
+      existingChat.conversationId
+      ===
+      chat.conversationId
+
+    )
+
+  if (alreadyExists) {
+
+    console.log(
+      "Conversation already saved"
+    )
+
+    return
+
+  }
+
+  existing.push(chat)
+
+  await chrome.storage.local.set({
+
+    mindbridge_chats:
+      existing
+
+  })
+
+  console.log(
+    "Universal chat saved"
+  )
+
+}
+
+/* =========================================
+Listen from page script
+========================================= */
+
+window.addEventListener(
+  "message",
+
+  async (event) => {
+
+    if (
+      event.source !== window
+    ) return
+
+    const data =
+      event.data
+
+    if (
+      data.type !==
+      "MINDBRIDGE_SAVE_CHAT"
+    ) return
+
+    console.log(
+      "Received chat from page:",
+      data.payload
+    )
+
+    await saveUniversalChat(
+      data.payload
+    )
+
+  }
 )
 
 /* =========================================
-Memory Injection
+Inject Memory
 ========================================= */
 
 setTimeout(() => {

@@ -3,60 +3,26 @@ console.log(
 )
 
 /* =========================================
-Save chats
+Send chat to extension
 ========================================= */
 
-const saveUniversalChat =
+const sendChatToExtension =
 (chat) => {
 
-  const existing =
+  window.postMessage({
 
-    JSON.parse(
+    type:
+      "MINDBRIDGE_SAVE_CHAT",
 
-      localStorage.getItem(
-        "mindbridge_chats"
-      ) || "[]"
+    payload:
+      chat
 
-    )
-
-  const alreadyExists =
-
-  existing.some(existingChat =>
-
-    existingChat.conversationId
-    ===
-    chat.conversationId
-
-  )
-
-if (alreadyExists) {
-
-  console.log(
-    "Conversation already saved"
-  )
-
-  return
-
-}
-
-existing.push(chat)
-
-  localStorage.setItem(
-
-    "mindbridge_chats",
-
-    JSON.stringify(existing)
-
-  )
-
-  console.log(
-    "Universal chat saved"
-  )
+  })
 
 }
 
 /* =========================================
-ChatGPT Adapter
+Parse ChatGPT Conversation
 ========================================= */
 
 const parseChatGPTConversation =
@@ -155,7 +121,7 @@ window.fetch =
 
       if (
         !url.includes(
-          "conversation"
+          "/conversation/"
         )
       ) {
 
@@ -201,7 +167,7 @@ window.fetch =
         universalChat
       )
 
-      saveUniversalChat(
+      sendChatToExtension(
         universalChat
       )
 
@@ -221,7 +187,7 @@ window.fetch =
 }
 
 /* =========================================
-WebSocket Interceptor
+WebSocket Detection
 ========================================= */
 
 const OriginalWebSocket =

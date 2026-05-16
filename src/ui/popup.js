@@ -22,42 +22,6 @@ const showStatus = (
 }
 
 /* =========================================
-Get Chats
-========================================= */
-
-const getChats =
-async () => {
-
-  const result =
-
-    await chrome.storage.local.get(
-      "mindbridge_chats"
-    )
-
-  return (
-    result.mindbridge_chats
-    || []
-  )
-
-}
-
-/* =========================================
-Save Chats
-========================================= */
-
-const saveChats =
-async (chats) => {
-
-  await chrome.storage.local.set({
-
-    mindbridge_chats:
-      chats
-
-  })
-
-}
-
-/* =========================================
 Render Single Chat
 ========================================= */
 
@@ -65,8 +29,6 @@ const renderConversation =
 (chat) => {
 
   output.innerHTML = ""
-
-  /* Back button */
 
   const backButton =
     document.createElement(
@@ -81,9 +43,14 @@ const renderConversation =
     async () => {
 
       const chats =
-        await getChats()
 
-      renderChats(chats)
+        await window
+          .MindBridgeStorage
+          .getChats()
+
+      renderChats(
+        chats
+      )
 
     }
   )
@@ -91,8 +58,6 @@ const renderConversation =
   output.appendChild(
     backButton
   )
-
-  /* Title */
 
   const title =
     document.createElement(
@@ -105,8 +70,6 @@ const renderConversation =
   output.appendChild(
     title
   )
-
-  /* Messages */
 
   chat.messages.forEach(
     message => {
@@ -218,8 +181,19 @@ document
     "click",
     async () => {
 
+      const rawChats =
+
+        await window
+          .MindBridgeStorage
+          .getChats()
+
       const chats =
-        await getChats()
+
+        window
+          .MindBridgeSchema
+          .normalizeChats(
+            rawChats
+          )
 
       renderChats(
         chats
@@ -244,8 +218,38 @@ document
     "click",
     async () => {
 
+      const rawChats =
+
+        await window
+          .MindBridgeStorage
+          .getChats()
+
       const chats =
-        await getChats()
+
+        window
+          .MindBridgeSchema
+          .normalizeChats(
+            rawChats
+          )
+
+      const exportData = {
+
+        exportedAt:
+          new Date()
+            .toISOString(),
+
+        app:
+          "MindBridge",
+
+        version:
+          "0.1",
+
+        totalChats:
+          chats.length,
+
+        chats
+
+      }
 
       const blob =
 
@@ -253,7 +257,7 @@ document
 
           [
             JSON.stringify(
-              chats,
+              exportData,
               null,
               2
             )
@@ -289,7 +293,7 @@ document
       )
 
       showStatus(
-        "Memory exported"
+        `${chats.length} chats exported`
       )
 
     }
@@ -342,34 +346,35 @@ document
 
           try {
 
-            const importedChats =
+            const importedData =
 
               JSON.parse(
                 e.target.result
               )
 
-            if (
-              !Array.isArray(
-                importedChats
+            const chats =
+
+              window
+                .MindBridgeSchema
+                .normalizeChats(
+
+                  importedData.chats
+                  || []
+
+                )
+
+            await window
+              .MindBridgeStorage
+              .saveChats(
+                chats
               )
-            ) {
-
-              throw new Error(
-                "Invalid format"
-              )
-
-            }
-
-            await saveChats(
-              importedChats
-            )
 
             renderChats(
-              importedChats
+              chats
             )
 
             showStatus(
-              `${importedChats.length} chats imported`
+              `${chats.length} chats imported`
             )
 
           }
@@ -406,9 +411,9 @@ document
     "click",
     async () => {
 
-      await chrome.storage.local.remove(
-        "mindbridge_chats"
-      )
+      await window
+        .MindBridgeStorage
+        .clearChats()
 
       output.innerHTML = ""
 

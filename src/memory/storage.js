@@ -1,41 +1,96 @@
-export const saveUniversalChat = (
-  chat
-) => {
+window.MindBridgeStorage = {
 
-  const existing =
+  /* =====================================
+  Get Chats
+  ====================================== */
 
-    JSON.parse(
+  async getChats() {
 
-      localStorage.getItem(
+    const result =
+
+      await chrome.storage.local.get(
         "mindbridge_chats"
-      ) || "[]"
+      )
 
+    return (
+      result.mindbridge_chats
+      || []
     )
 
-  existing.push(chat)
+  },
 
-  localStorage.setItem(
+  /* =====================================
+  Save Chats
+  ====================================== */
 
-    "mindbridge_chats",
+  async saveChats(chats) {
 
-    JSON.stringify(existing)
+    await chrome.storage.local.set({
 
-  )
+      mindbridge_chats:
+        chats
 
-  console.log(
-    "Universal chat saved"
-  )
+    })
 
-}
+  },
 
-export const getUniversalChats = () => {
+  /* =====================================
+  Clear Chats
+  ====================================== */
 
-  return JSON.parse(
+  async clearChats() {
 
-    localStorage.getItem(
+    await chrome.storage.local.remove(
       "mindbridge_chats"
-    ) || "[]"
+    )
 
-  )
+  },
+
+  /* =====================================
+  Add Chat
+  ====================================== */
+
+  async addChat(chat) {
+
+    const chats =
+      await this.getChats()
+
+    const exists =
+
+      chats.some(
+        existing =>
+
+          existing.conversationId
+          ===
+          chat.conversationId
+
+          &&
+
+          existing.platform
+          ===
+          chat.platform
+      )
+
+    if (exists) {
+
+      console.log(
+        "Duplicate skipped"
+      )
+
+      return
+
+    }
+
+    chats.push(chat)
+
+    await this.saveChats(
+      chats
+    )
+
+    console.log(
+      "Universal chat saved"
+    )
+
+  }
 
 }

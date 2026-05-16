@@ -21,22 +21,27 @@
     "service_worker": "src/background/service-worker.js"
   },
 
-  "content_scripts": [
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-
-      "js": [
-        "src/content/content-script.js"
-      ]
-    }
-  ],
+"content_scripts": [
+  {
+    "matches": ["<all_urls>"],
+"js": [
+  "src/memory/storage.js",
+  "src/memory/schema.js",
+  "src/adapters/registry.js",
+  "src/adapters/chatgptAdapter.js",
+  "src/adapters/claudeAdapter.js",
+  "src/content/content-script.js"
+]
+  }
+],
 
   "web_accessible_resources": [
     {
       "resources": [
-        "src/content/page-script.js"
+        "src/content/page-script.js",
+        "src/adapters/registry.js",
+        "src/adapters/chatgptAdapter.js",
+        "src/adapters/claudeAdapter.js"
       ],
 
       "matches": [

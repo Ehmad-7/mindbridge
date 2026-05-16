@@ -1,13 +1,58 @@
-export const UniversalChatSchema = {
+window.MindBridgeSchema = {
 
-  platform: "",
+  /* =====================================
+  Normalize Chats
+  ====================================== */
 
-  conversationId: "",
+  normalizeChats(chats) {
 
-  title: "",
+    return chats.map(chat => ({
 
-  timestamp: 0,
+      schemaVersion:
+        "1.0",
 
-  messages: []
+      platform:
+        chat.platform
+        || "unknown",
+
+      conversationId:
+        chat.conversationId
+        || crypto.randomUUID(),
+
+      title:
+        chat.title
+        || "Untitled",
+
+      timestamp:
+        chat.timestamp
+        || Date.now(),
+
+      messages:
+
+        (chat.messages || [])
+
+          .filter(message =>
+
+            message.content
+            &&
+            message.content.trim()
+          )
+
+          .map(message => ({
+
+            role:
+
+              message.role === "human"
+                ? "user"
+                : message.role,
+
+            content:
+              message.content.trim()
+
+          }))
+
+    }))
+
+  }
 
 }

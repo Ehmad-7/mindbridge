@@ -1,481 +1,206 @@
-console.log(
-  "MindBridge page script active"
-)
+console.log("MindBridge page script active");
 
 /* =========================================
 Send chat to extension
 ========================================= */
 
-const sendChatToExtension =
-(chat) => {
-
+const sendChatToExtension = (chat) => {
   window.postMessage({
+    type: "MINDBRIDGE_SAVE_CHAT",
 
-    type:
-      "MINDBRIDGE_SAVE_CHAT",
+    payload: chat,
+  });
+};
 
-    payload:
-      chat
+/* =========================================
+Find Adapter
+========================================= */
+const getAdapter =
+(name) => {
 
-  })
+  return window
+    .MindBridgeAdapters
+    .getAdapters()
+    .find(adapter =>
+
+      adapter.name === name
+
+    )
 
 }
-
 /* =========================================
 ChatGPT Parser
 ========================================= */
-
-const parseChatGPTConversation =
-(data) => {
-
-  if (!data?.mapping)
-    return null
-
-  const messages = []
-
-  Object.values(
-    data.mapping
-  ).forEach(node => {
-
-    const message =
-      node.message
-
-    if (!message)
-      return
-
-    const role =
-      message.author?.role
-
-    const parts =
-      message.content?.parts
-
-    if (
-      !parts ||
-      !parts.length
-    ) return
-
-    messages.push({
-
-      role,
-
-      content:
-        parts.join(" ")
-
-    })
-
-  })
-
-  return {
-
-    platform:
-      "chatgpt",
-
-    conversationId:
-      data.conversation_id
-      || null,
-
-    title:
-      data.title
-      || "Untitled",
-
-    timestamp:
-      Date.now(),
-
-    messages
-
-  }
-
-}
 
 /* =========================================
 Claude Parser
 ========================================= */
 
-const parseClaudeConversation =
-(data, url) => {
-
-  if (!data?.chat_messages)
-    return null
-
-  const messages =
-
-    data.chat_messages.map(
-      message => ({
-
-        role:
-          message.sender
-          || "assistant",
-
-        content:
-
-          message.content
-            ?.map(block =>
-              block.text || ""
-            )
-            .join(" ")
-
-          || ""
-
-      })
-    )
-
-  let conversationId = null
-
-  try {
-
-    conversationId =
-
-      url.split(
-        "/chat_conversations/"
-      )[1]?.split("?")[0]
-
-  }
-
-  catch {
-
-    conversationId =
-      crypto.randomUUID()
-
-  }
-
-  return {
-
-    platform:
-      "claude",
-
-    conversationId,
-
-    title:
-      data.name
-      || "Claude Chat",
-
-    timestamp:
-      Date.now(),
-
-    messages
-
-  }
-
-}
-
 /* =========================================
 Fetch Interceptor
 ========================================= */
 
-const originalFetch =
-  window.fetch
+const originalFetch = window.fetch;
 
-window.fetch =
-  async (...args) => {
+window.fetch = async (...args) => {
+  const response = await originalFetch(...args);
 
-    const response =
-      await originalFetch(...args)
+  try {
+    const request = args[0];
 
-    try {
+    const url = typeof request === "string" ? request : request.url;
 
-      const request =
-        args[0]
+    console.log("FETCH DETECTED:", url);
 
-      const url =
-
-        typeof request ===
-        "string"
-
-          ? request
-
-          : request.url
-
-      console.log(
-        "FETCH DETECTED:",
-        url
-      )
-
-      /* =====================================
+    /* =====================================
       CHATGPT
       ====================================== */
 
-      if (
-        url.includes(
-          "/conversation/"
-        )
-      ) {
+    if (url.includes("/conversation/")) {
+      const cloned = response.clone();
 
-        const cloned =
-          response.clone()
+      let data;
 
-        let data
-
-        try {
-
-          data =
-            await cloned.json()
-
-        }
-
-        catch {
-
-          data =
-            await cloned.text()
-
-        }
-
-        const universalChat =
-
-          parseChatGPTConversation(
-            data
-          )
-
-        if (
-          universalChat
-        ) {
-
-          console.log(
-            "CHATGPT CHAT:",
-            universalChat
-          )
-
-          sendChatToExtension(
-            universalChat
-          )
-
-        }
-
+      try {
+        data = await cloned.json();
+      } catch {
+        data = await cloned.text();
       }
 
-      /* =====================================
+      const universalChat = getAdapter(
+  "ChatGPT"
+)
+?.parseConversation(
+  data
+)
+
+      if (universalChat) {
+        console.log("CHATGPT CHAT:", universalChat);
+
+        sendChatToExtension(universalChat);
+      }
+    }
+
+    /* =====================================
       CLAUDE INTERCEPT
       ====================================== */
 
-      if (
-        url.includes(
-          "chat_conversations"
-        )
+    if (url.includes("chat_conversations") && url.includes("tree=True")) {
+      console.log("CLAUDE CONVERSATION DETECTED");
 
-        &&
+      const cloned = response.clone();
 
-        url.includes(
-          "tree=True"
-        )
-      ) {
+      let data;
 
-        console.log(
-          "CLAUDE CONVERSATION DETECTED"
-        )
-
-        const cloned =
-          response.clone()
-
-        let data
-
-        try {
-
-          data =
-            await cloned.json()
-
-        }
-
-        catch {
-
-          data =
-            await cloned.text()
-
-        }
-
-        console.log(
-          "CLAUDE RAW:",
-          data
-        )
-
-        const universalChat =
-
-          parseClaudeConversation(
-            data,
-            url
-          )
-
-        if (
-          universalChat
-        ) {
-
-          console.log(
-            "CLAUDE CHAT:",
-            universalChat
-          )
-
-          sendChatToExtension(
-            universalChat
-          )
-
-        }
-
+      try {
+        data = await cloned.json();
+      } catch {
+        data = await cloned.text();
       }
 
+      console.log("CLAUDE RAW:", data);
+
+      const universalChat = getAdapter(
+  "Claude"
+)
+?.parseConversation(
+  data,
+  url
+)
+
+      if (universalChat) {
+        console.log("CLAUDE CHAT:", universalChat);
+
+        sendChatToExtension(universalChat);
+      }
     }
+  } catch (error) {
+    console.log("Fetch interceptor error:", error);
+  }
 
-    catch (error) {
-
-      console.log(
-        "Fetch interceptor error:",
-        error
-      )
-
-    }
-
-    return response
-
-}
+  return response;
+};
 
 /* =========================================
 WebSocket Detection
 ========================================= */
 
-const OriginalWebSocket =
-  window.WebSocket
+const OriginalWebSocket = window.WebSocket;
 
-window.WebSocket =
-  function (...args) {
+window.WebSocket = function (...args) {
+  console.log("WebSocket detected:", args[0]);
 
-    console.log(
-      "WebSocket detected:",
-      args[0]
-    )
-
-    return new OriginalWebSocket(
-      ...args
-    )
-
-}
+  return new OriginalWebSocket(...args);
+};
 
 /* =========================================
 Direct Claude Fetch
 ========================================= */
 
-const fetchClaudeConversation =
-async () => {
-
+const fetchClaudeConversation = async () => {
   try {
+    if (!location.hostname.includes("claude.ai")) return;
 
-    if (
-      !location.hostname.includes(
-        "claude.ai"
-      )
-    ) return
+    const path = window.location.pathname;
 
-    const path =
-      window.location.pathname
+    console.log("CLAUDE PATH:", path);
 
-    console.log(
-      "CLAUDE PATH:",
-      path
-    )
-
-    const match =
-
-      path.match(
-        /chat\/(.+)/
-      )
+    const match = path.match(/chat\/(.+)/);
 
     if (!match) {
+      console.log("No Claude conversation");
 
-      console.log(
-        "No Claude conversation"
-      )
-
-      return
-
+      return;
     }
 
-    const conversationId =
-      match[1]
+    const conversationId = match[1];
 
-    console.log(
-      "Claude Conversation ID:",
-      conversationId
-    )
+    console.log("Claude Conversation ID:", conversationId);
 
-    const orgMatch =
-
-      document.documentElement
-        .innerHTML
-        .match(
-          /"organization_uuid":"(.*?)"/
-        )
+    const orgMatch = document.documentElement.innerHTML.match(
+      /"organization_uuid":"(.*?)"/,
+    );
 
     if (!orgMatch) {
+      console.log("Organization ID not found");
 
-      console.log(
-        "Organization ID not found"
-      )
-
-      return
-
+      return;
     }
 
-    const organizationId =
-      orgMatch[1]
+    const organizationId = orgMatch[1];
 
-    console.log(
-      "Organization ID:",
-      organizationId
-    )
+    console.log("Organization ID:", organizationId);
 
-    const endpoint =
+    const endpoint = `/api/organizations/${organizationId}/chat_conversations/${conversationId}?tree=True&rendering_mode=messages&render_all_tools=true`;
 
-`/api/organizations/${organizationId}/chat_conversations/${conversationId}?tree=True&rendering_mode=messages&render_all_tools=true`
+    console.log("FETCHING CLAUDE:", endpoint);
 
-    console.log(
-      "FETCHING CLAUDE:",
-      endpoint
-    )
+    const response = await fetch(endpoint);
 
-    const response =
-      await fetch(endpoint)
+    const data = await response.json();
 
-    const data =
-      await response.json()
+    console.log("CLAUDE RAW:", data);
 
-    console.log(
-      "CLAUDE RAW:",
-      data
-    )
+    const universalChat = getAdapter(
+  "Claude"
+)
+?.parseConversation(
+  data,
+  endpoint
+);
 
-    const universalChat =
+    if (!universalChat) return;
 
-      parseClaudeConversation(
-        data,
-        endpoint
-      )
+    console.log("CLAUDE CHAT:", universalChat);
 
-    if (!universalChat)
-      return
-
-    console.log(
-      "CLAUDE CHAT:",
-      universalChat
-    )
-
-    sendChatToExtension(
-      universalChat
-    )
-
+    sendChatToExtension(universalChat);
+  } catch (error) {
+    console.log("Claude direct fetch error:", error);
   }
-
-  catch (error) {
-
-    console.log(
-      "Claude direct fetch error:",
-      error
-    )
-
-  }
-
-}
+};
 
 /* =========================================
 Run Claude Fetch
 ========================================= */
 
-setTimeout(
-  fetchClaudeConversation,
-  3000
-)
+setTimeout(fetchClaudeConversation, 3000);
